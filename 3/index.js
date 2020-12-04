@@ -1,8 +1,4 @@
-const fs = require('fs')
-
-const input = fs.readFileSync('./input', 'utf8')
-
-const lines = input.split('\n').filter(x => x)
+const lines = require('fs').readFileSync('./input', 'utf8').split('\n').filter(x => x)
 const count = (slope, [dx, dy], tree = '#') =>
   slope.reduce(([c, x, ry], l) =>
     ry > 1
