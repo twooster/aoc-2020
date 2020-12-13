@@ -1,72 +1,66 @@
-const numbers = require('fs').readFileSync('./input', 'utf8')
+const { memo } = require('../util')
+
+let numbers = require('fs').readFileSync('./input', 'utf8')
   .split('\n').filter(x => x).map(x => +x)
   .sort((a, b) => a-b)
 
-const numbersListWithoutEnd =
-      numbers.reduce(
-        (acc, value) => ({ prev: acc ? acc : { value: 0 }, value }),
-        null
-      )
-const numbersList = { prev: numbersListWithoutEnd, value: numbersListWithoutEnd.value + 3 }
+numbers = [0, 1, 2, 3]
+const numbersList =numbers.reduceRight(
+    (acc, value) => ({ next: acc, value }),
+    null
+  )
 
-function part1(elem) {
+function part1(numbersList) {
   let step1 = 0
-  let step3 = 0
+  let step3 = 1
 
-  let cur = elem
+  let cur = numbersList
   while (cur) {
-    const { value, prev } = cur
-    if (prev) {
-      const diff = value - prev.value
+    const { value, next } = cur
+    if (next) {
+      const diff = next.value - value
       if (diff === 3) {
         ++step3
       } else if (diff === 1) {
         ++step1
       }
     }
-    cur = prev
+    cur = next
   }
   return step1 * step3
 }
 
 console.log(part1(numbersList))
 
-function part2(e) {
- }
-
-/*
-function memo1(fn) {
-  const memo = new WeakMap()
-  return v => {
-    const memoVal = memo.get(v)
-    if (memoVal !== undefined) {
-      return memoVal
-    }
-    const ret = fn(v)
-    memoVal.set(v, ret)
-    return ret
-  }
-}
-
-function part2(numbersList) {
-
-  const fn = memo1(l => {
-    const { next, value } = l
-    if (!next) {
-      return 1
-    }
-    let { next: nextNext } = next
-    if (!nextNext) {
-      return 1
-    }
+function part2(head, maxGap) {
+  const countRemaining = memo(elem => {
+    // numbers = [0, 1, 2, 3] 6
+    // [0, 1, 2, 3] 6
+    // [0, 1, 3] 6
+    // [0, 2, 3] 6
+    // [0, 3] 6
+    //
+    //   1 * c([1, 2, 3])
+    // + 1 * c([2, 3])
+    // + 1 * c([3])
+    const { value } = elem
     let count = 1
-    while (nextNext && nextNext.value - value <= 3) {
-      nextNext = nextNext.next
+    let mul = 2
+
+    elem = elem.next
+    while (elem && elem.value - value <= maxGap) {
+      count += mul * countRemaining(elem)
+      mul <<= 1
+      elem = elem.next
     }
-    if (nextNext.value - value <= 3) {
-    }
+    return count
   })
+  return countRemaining(head)
 }
+
+// too low: 153055008
+
+console.log(part2(numbersList, 3))
 /*
 console.log(
   numbers.sort((a, b) => a - b).reduce(
