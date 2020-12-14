@@ -4,11 +4,13 @@ let numbers = require('fs').readFileSync('./input', 'utf8')
   .split('\n').filter(x => x).map(x => +x)
   .sort((a, b) => a-b)
 
-numbers = [0, 1, 2, 3]
-const numbersList =numbers.reduceRight(
+const numbersList = {
+  next: numbers.reduceRight(
     (acc, value) => ({ next: acc, value }),
     null
-  )
+  ),
+  value: 0
+}
 
 function part1(numbersList) {
   let step1 = 0
@@ -32,50 +34,19 @@ function part1(numbersList) {
 
 console.log(part1(numbersList))
 
-function part2(head, maxGap) {
+function part2(head) {
   const countRemaining = memo(elem => {
-    // numbers = [0, 1, 2, 3] 6
-    // [0, 1, 2, 3] 6
-    // [0, 1, 3] 6
-    // [0, 2, 3] 6
-    // [0, 3] 6
-    //
-    //   1 * c([1, 2, 3])
-    // + 1 * c([2, 3])
-    // + 1 * c([3])
+    if (!elem || !elem.next) {
+      return 1n
+    }
     const { value } = elem
-    let count = 1
-    let mul = 2
-
-    elem = elem.next
-    while (elem && elem.value - value <= maxGap) {
-      count += mul * countRemaining(elem)
-      mul <<= 1
-      elem = elem.next
+    let count = 0n
+    for (elem = elem.next; elem && elem.value - value <= 3; elem = elem.next) {
+      count += countRemaining(elem)
     }
     return count
   })
   return countRemaining(head)
 }
 
-// too low: 153055008
-
-console.log(part2(numbersList, 3))
-/*
-console.log(
-  numbers.sort((a, b) => a - b).reduce(
-    ([last, step1, step2, step3], v) => [v, step1 + ((v - last === 1) & 1), step2 + ((v - last === 2) & 1), step3 + ((v - last === 3) & 1)],
-    [0, 0, 0, 1]
-  )
-)
-*/
-
-/*
-[2, 4, 5, 6]
-
-function fn(a, i) {
-  const n = a[i]
-  if (i < n.length - 2 && a[n+2] - n < 3) {
-
-  }
-  */
+console.log(part2(numbersList))
