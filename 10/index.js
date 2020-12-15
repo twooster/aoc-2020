@@ -1,52 +1,29 @@
-const { memo } = require('../util')
-
-let numbers = require('fs').readFileSync('./input', 'utf8')
+const numbers = require('fs').readFileSync('./input', 'utf8')
   .split('\n').filter(x => x).map(x => +x)
   .sort((a, b) => a-b)
 
-const numbersList = {
-  next: numbers.reduceRight(
-    (acc, value) => ({ next: acc, value }),
-    null
-  ),
-  value: 0
+function part1(numbers) {
+  return numbers.reduce(([s1, s3, l], n) =>
+    [s1 + (n - l === 1 & 1), s3 + (n - l === 3 & 1), n],
+    [0, 1, 0]
+  ).slice(0,2).reduce((a, b) => a * b)
 }
 
-function part1(numbersList) {
-  let step1 = 0
-  let step3 = 1
+console.log(part1(numbers))
 
-  let cur = numbersList
-  while (cur) {
-    const { value, next } = cur
-    if (next) {
-      const diff = next.value - value
-      if (diff === 3) {
-        ++step3
-      } else if (diff === 1) {
-        ++step1
-      }
-    }
-    cur = next
-  }
-  return step1 * step3
-}
-
-console.log(part1(numbersList))
-
-function part2(head) {
-  const countRemaining = memo(elem => {
-    if (!elem || !elem.next) {
-      return 1n
-    }
-    const { value } = elem
+function part2(numbers, maxGap) {
+  numbers = [0, ...numbers]
+  const counts = Array(numbers.length)
+  counts[counts.length - 1] = 1n
+  for (let i = numbers.length - 2; i >= 0; --i) {
+    const value = numbers[i]
     let count = 0n
-    for (elem = elem.next; elem && elem.value - value <= 3; elem = elem.next) {
-      count += countRemaining(elem)
+    for (let j = i+1; j < numbers.length && numbers[j] - value <= maxGap; ++j) {
+      count += counts[j]
     }
-    return count
-  })
-  return countRemaining(head)
+    counts[i] = count
+  }
+  return counts[0]
 }
 
-console.log(part2(numbersList))
+console.log(part2(numbers, 3))
