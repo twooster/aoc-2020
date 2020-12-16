@@ -1,15 +1,19 @@
 const input = `16,11,15,0,1,7`.split(',').map((x, i) => [+x, i+1])
+//const input = `0,3,6`.split(',').map((x, i) => [+x, i+1])
 
 function nthSpoken(input, n) {
-  const mem = new Map(input)
+  const mem = Array(n).fill(0)
+  for (const [m, i] of input) {
+    mem[m] = i
+  }
 
   let lastSpokenTurn = 0
   let turn = input.length + 1
   let toSpeak = 0
   while (true) {
-    lastSpokenTurn = mem.get(toSpeak) || 0
+    lastSpokenTurn = mem[toSpeak] || 0
 
-    mem.set(toSpeak, turn)
+    mem[toSpeak] = turn
 
     toSpeak = lastSpokenTurn === 0 ? 0 : (turn - lastSpokenTurn)
 
