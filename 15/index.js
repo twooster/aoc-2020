@@ -1,8 +1,7 @@
 const input = `16,11,15,0,1,7`.split(',').map((x, i) => [+x, i+1])
-//const input = `0,3,6`.split(',').map((x, i) => [+x, i+1])
 
 function nthSpoken(input, n) {
-  const mem = Array(n).fill(0)
+  const mem = Array(n)
   for (const [m, i] of input) {
     mem[m] = i
   }
