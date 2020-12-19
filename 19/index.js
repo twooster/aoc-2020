@@ -18,23 +18,24 @@ function makeParser(rules, part2) {
     if (term) {
       const t = term[1]
       return function * (s, i) {
-        if (s[i] === t) {
+        if (s.slice(i, i + t.length) === t) {
           yield i + t.length
         }
       }
     }
 
     const parts = v.split('|').map(x => x.split(/\s+/).filter(x => x))
+
     return function * (s, i) {
       for (const pieces of parts) {
         const pf = pieces.map(p => _parse(p))
-        const recur = function * (pi, j) {
+        const recur = function * (pi, i) {
           const f = pf[pi]
           if (!f) {
-            yield j
+            yield i
           } else {
-            for (const k of f(s, j)) {
-              yield * recur(pi + 1, k)
+            for (const j of f(s, i)) {
+              yield * recur(pi + 1, j)
             }
           }
         }
