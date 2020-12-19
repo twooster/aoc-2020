@@ -1,4 +1,3 @@
-const { memo } = require('../util')
 const [rules, inputs] = require('fs').readFileSync('./input', 'utf8').split('\n\n').map(x => x.split('\n').filter(y => y))
 
 const rulesPart1 = new Map(rules.map(r => r.split(': ')))
@@ -7,8 +6,14 @@ const rulesPart2 = new Map(rulesPart1)
   .set('11', '42 31 | 42 11 31')
 
 const TERMINAL = /^"([^"]+)"$/
-function makeParser(rules, part2) {
-  const _parse = memo(k => {
+function makeParser(rules) {
+  const memo = new Map()
+  const parse = k => {
+    let fn = memo.get(k)
+    if (fn) {
+      return fn
+    }
+
     const v = rules.get(k)
     if (v === undefined) {
       throw new Error(`oh no ${k}`)
@@ -26,9 +31,9 @@ function makeParser(rules, part2) {
 
     const parts = v.split('|').map(x => x.split(/\s+/).filter(x => x))
 
-    return function * (s, i) {
+    fn = function * (s, i = 0) {
       for (const pieces of parts) {
-        const pf = pieces.map(p => _parse(p))
+        const pf = pieces.map(p => parse(p))
         const recur = function * (pi, i) {
           const f = pf[pi]
           if (!f) {
@@ -42,9 +47,11 @@ function makeParser(rules, part2) {
         yield * recur(0, i)
       }
     }
-  })
+    memo.set(k, fn)
+    return fn
+  }
   return r => s => {
-    for (const j of _parse(r)(s, 0)) {
+    for (const j of parse(r)(s)) {
       if (j === s.length) {
         return true
       }
