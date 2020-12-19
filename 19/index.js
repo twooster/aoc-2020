@@ -9,44 +9,6 @@ const rulesPart2 = new Map(rulesPart1)
 const TERMINAL = /^"([^"]+)"$/
 function makeParser(rules, part2) {
   const _parse = memo(k => {
-    /*
-    if (part2) {
-      if (k === '8') {
-        const f = _parse('42')
-        const r =  (s, i) => {
-          let match, j
-          ([match, i] = f(s, i))
-          if (!match) {
-            return [false]
-          }
-          while (true) {
-            ([match, j] = r(s, i))
-            if (!match) {
-              return [true, i]
-            }
-            i = j
-          }
-        }
-      } else if (k === '11') {
-        const f42 = _parse('42')
-        const f31 = _parse('31')
-        const r = (s, i) => {
-          let match, j
-          ([match, i] = f42(s, i))
-          if (!match) {
-            return [false]
-          }
-          ([match, j] = r(s, i))
-          if (match) {
-            i = j
-          }
-          return f31(s, i)
-        }
-        return r
-      }
-    }
-    */
-
     const v = rules.get(k)
     if (v === undefined) {
       throw new Error(`oh no ${k}`)
@@ -55,36 +17,43 @@ function makeParser(rules, part2) {
     const term = v.match(TERMINAL)
     if (term) {
       const t = term[1]
-      return (s, i) => s[i] === t ? [true, i + t.length] : [false]
+      return function * (s, i) {
+        if (s[i] === t) {
+          yield i + t.length
+        }
+      }
     }
 
     const parts = v.split('|').map(x => x.split(/\s+/).filter(x => x))
-    return (s, i) => {
-      let match, j
-
-      outer:
-      for (const p of parts) {
-        j = i
-        for (const x of p) {
-          const f = _parse(x);
-          ([match, j] = f(s, j))
-          if (!match) {
-            continue outer
+    return function * (s, i) {
+      for (const pieces of parts) {
+        const pf = pieces.map(p => _parse(p))
+        const recur = function * (pi, j) {
+          const f = pf[pi]
+          if (!f) {
+            yield j
+          } else {
+            for (const k of f(s, j)) {
+              yield * recur(pi + 1, k)
+            }
           }
         }
-        return [true, j]
+        yield * recur(0, i)
       }
-      return [false]
     }
   })
   return r => s => {
-    const [match, l] = _parse(r)(s, 0)
-    return match && l === s.length
+    for (const j of _parse(r)(s, 0)) {
+      if (j === s.length) {
+        return true
+      }
+    }
+    return false
   }
 }
 
 const part1 = makeParser(rulesPart1)('0')
 console.log(inputs.reduce((acc, i) => acc + (part1(i) & 1), 0))
-const part2 = makeParser(rulesPart2, true)('0')
+const part2 = makeParser(rulesPart2)('0')
 console.log(inputs.reduce((acc, i) => acc + (part2(i) & 1), 0))
 
