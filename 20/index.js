@@ -15,27 +15,12 @@ const computeTile = t => ([
 const rotateClockwise =
   l => l.map((row, y) => row.map((_, x) => l[row.length - x - 1][y]))
 const flipVert = a => a.map((_, y) => a[a.length - y - 1])
-// a b c
-// d e f
-// g h i
-
-
-/*
-const a = ['abc'.split(''), 'hid'.split(''), 'gfe'.split('')]
-console.log(a.map(x => x.join('')).join('\n'))
-console.log()
-console.log(rotateClockwise(a).map(x => x.join('')).join('\n'))
-console.log()
-console.log(rotateClockwise(rotateClockwise(a)).map(x => x.join('')).join('\n'))
-console.log()
-console.log(rotateClockwise(rotateClockwise(rotateClockwise(a))).map(x => x.join('')).join('\n'))
-*/
 
 const input = new Map(require('fs').readFileSync('./input', 'utf8').split('\n\n')
   .map(s => s.match(/^Tile (\d+):\n(.+)\n?$/sm))
   .map(([,id,lines]) => {
     id = parseInt(id, 10)
-    lines = lines.split('\n').filter(x => x).map(s => s.split('').map(x => x === '.' ? 0 : 1))
+    lines = lines.split('\n').filter(x => x).map(s => s.split('').map(x => x === '#' ? 1 : 0))
 
     const permutations = []
 
@@ -90,13 +75,65 @@ function findAllTheAnswersToAllTheThings(input) {
   const corners = [0, side - 1, input.size - 1, input.size - side]
 
   const placements = findSquarePlacements(input, side)
-  console.log('placements', placements)
 
   const part1Answer = placements
     .filter((_, i) => corners.includes(i))
     .map(([id]) => id)
     .reduce((a, b) => a * b, 1)
 
+  const fullImage = []
+  for (let y = 0; y < side; ++y) {
+    const offset = y * side
+    fullImage.push(...
+      placements.slice(offset, offset + side)
+        .map(tile => tile[1][TILE].slice(1, -1).map(x => x.slice(1, -1)))
+        .reduce((acc, img) => acc.map((row, i) => row.concat(img[i])))
+    )
+  }
+
+  const countSeaMonsters = img => {
+    let seaMonsters = 0
+    for (let y = 1; y < img.length - 1; ++y) {
+      const a = img[y-1]
+      const b = img[y]
+      const c = img[y+1]
+      for (let x = 0; x < b.length - 19; ++x) {
+        seaMonsters +=
+          b[x + 0] & b[x + 5] & b[x + 6] & b[x + 11] & b[x + 12] & b[x + 17] & b[x + 18] & b[x + 19]
+          & c[x + 1] & c[x + 4] & c[x + 7] & c[x + 10] & c[x + 13] & c[x + 16]
+          & a[x + 18]
+      }
+    }
+    return seaMonsters
+  }
+
+  const seaMonsters = (() => {
+    let last = fullImage
+    let lastMirror = flipVert(fullImage)
+    for (let i = 0; true; ++i) {
+      let c = countSeaMonsters(last)
+      if (c > 0) {
+        return c
+      }
+      c = countSeaMonsters(lastMirror)
+      if (c > 0) {
+        return c
+      }
+      if (i < 3) {
+        last = rotateClockwise(last)
+        lastMirror = rotateClockwise(lastMirror)
+      } else {
+        break
+      }
+    }
+    return 0
+  })()
+
+  const part2Answer =
+    fullImage.reduce((acc, row) => acc + row.reduce((a, b) => a + b, 0), 0)
+    - 15 * seaMonsters
+
+  return [part1Answer, part2Answer]
 }
 
 
@@ -106,10 +143,8 @@ function findAllTheAnswersToAllTheThings(input) {
 ..................#
 #....##....##....###
 .#..#..#..#..#..#
-*/
-// return b[o + 0] === 1 && b[o + 5] === 1 && b[o + 6] === 1 && b[o + 11] === 1 && b[o + 12] === 1 && b[o + 17] === 1 && b[o + 18] && b[o + 19] === 1
-//   && c[o + 1] === 1 && c[o + 4] === 1 && c[o + 7] === 1 && c[o + 10] === 1 && c[o + 13] === 1 && c[o + 16] === 1
-//   && a[o + 18] === 1
-//
 
-findAllTheAnswersToAllTheThings(input)
+15 # characters
+*/
+
+console.log(findAllTheAnswersToAllTheThings(input))
